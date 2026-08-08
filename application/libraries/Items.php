@@ -68,11 +68,7 @@ class Items
                 ];
 
                 if (!is_array($cacheData['icon'])) {
-                    // make sure It's not in DB already
-                    $result = $this->CI->db->query("SELECT COUNT(*) as count FROM item_template WHERE entry = ?", [$item])->getRow();
-                    if ($result->count == 0) {
-                        $this->CI->db->table('item_template')->insert($cacheData);
-                    }
+                    $this->CI->db->table('item_template')->ignore(true)->insert($cacheData);
 
                     // save to cache
                     if ($enableCache)
