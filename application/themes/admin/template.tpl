@@ -448,43 +448,37 @@
             </div>
         </div>
 	<script type="text/javascript">
-	var Notify = {
-		notifyField: $("#content"),
-		countField: $("#notifications"),
-	
-		update: function()
-		{
-			$.get(Config.URL + "admin/notifications", function(data)
-			{
-				Notify.notifyField.html(data);
-			});
+		const Notify = {
+			notifyField: $("#content"),
+			countField: $("#notifications"),
 
-			$.get(Config.URL + "admin/notifications/count", function(data)
-			{
-				if (data > 0)
-					Notify.countField.removeClass("hidden");
-				else
-					Notify.countField.addClass("hidden");
+			update: function () {
+				$.get(Config.URL + "admin/notifications", function (data) {
+					Notify.notifyField.html(data);
+				});
 
-			});
-		},
-		
-		markRead: function(id, element)
-		{
-			element = $(element);
-			$.get(Config.URL + "admin/markReadNotification/" + id)
-			element.removeClass("font-semibold");
-			Notify.countField.addClass("hidden");
-		},
-		
-		markAllRead: function()
-		{
-			$.get(Config.URL + "admin/markReadNotification/" + false + "/" + true)
-		}
-	}
-	
-	Notify.update();
-	setInterval(Notify.update, 10000);
+				$.get(Config.URL + "admin/notifications/count", function (data) {
+					if (data > 0)
+						Notify.countField.removeClass("hidden");
+					else
+						Notify.countField.addClass("hidden");
+
+				});
+			},
+
+			markRead: function (id, element) {
+				element = $(element);
+				$.get(Config.URL + "admin/markReadNotification/" + id)
+				element.removeClass("font-semibold");
+				Notify.countField.addClass("hidden");
+			},
+
+			markAllRead: function () {
+				$.get(Config.URL + "admin/markReadNotification/" + false + "/" + true)
+			}
+		};
+
+		Notify.update();
 	</script>
 
 	<script type="text/javascript">const modeBtn=document.getElementById("mode");modeBtn.onchange=e=>{
