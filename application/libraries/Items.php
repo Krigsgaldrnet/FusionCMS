@@ -466,22 +466,17 @@ class Items
 
         if ($cache !== false) {
             return $cache;
-        } else {
-            $query = CI::$APP->db->query("SELECT spellText FROM spelltext_en WHERE spellId = ? LIMIT 1", [$id]);
+        }
 
-            // Check for results
-            if ($query->getNumRows() > 0) {
-                $row = $query->getResultArray();
+        $row = CI::$APP->db->table('spelltext_en')->select('spellText')->where('spellId', $id)->get()->getRow();
 
-                $data = $row[0]['spellText'];
-            } else {
-                $data = false;
-            }
+        // Check for results
+        $data = $row?->spellText ?? false;
 
+        if ($data)
             CI::$APP->cache->save("spells/spell_" . $id, $data);
 
-            return $data;
-        }
+        return $data;
     }
 
     /**
