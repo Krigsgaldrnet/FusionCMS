@@ -54,7 +54,7 @@ class Security extends MX_Controller
 
     public function submit()
     {
-        if ($this->CI->external_account_model->getTotpSecret() !== null && ($this->CI->user->getTotpSecret() != $this->CI->external_account_model->getTotpSecret()))
+        if ($this->external_account_model->getTotpSecret() !== null && ($this->user->getTotpSecret() != $this->external_account_model->getTotpSecret()))
         {
             die('no');
         }
