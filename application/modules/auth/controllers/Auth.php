@@ -169,13 +169,16 @@ class Auth extends MX_Controller
                 unset($_SESSION['captcha']);
                 Services::session()->remove('attempts');
 
-                // Remember me
+                // Remember me: issue a random rotating token (never store the password hash)
                 if (isset($_POST["remember"]))
                 {
                     if($this->input->post("remember") == "true")
                     {
-                        $this->input->set_cookie("fcms_username", $username, 60 * 60 * 24 * 365);
-                        $this->input->set_cookie("fcms_password", $sha_pass_hash["verifier"], 60 * 60 * 24 * 365);
+                        $rawToken = $this->cms_model->issueRememberMeToken($this->user->getId());
+
+                        $cookieExpiry = $this->config->item('cookie_expire'); // 30 days
+                        $this->input->set_cookie("fcms_username", $username, $cookieExpiry);
+                        $this->input->set_cookie("fcms_token", $rawToken, $cookieExpiry);
                     }
                 }
 

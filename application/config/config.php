@@ -229,7 +229,8 @@ $config['encryption_key'] = '';
 $config['cookie_prefix'] = '';
 $config['cookie_domain'] = '';
 $config['cookie_path'] = '/';
-$config['cookie_secure'] = false;
+$config['cookie_secure'] = true;
+$config['cookie_expire'] = 60 * 60 * 24 * 30; // 30 days
 $config['cookie_httponly'] = false;
 $config['cookie_samesite'] = 'Lax';
 

@@ -97,28 +97,62 @@ Events::on('pre_controller', static function () {
         // Username: Read cookie
         $username = CI::$APP->input->cookie('fcms_username');
 
-        // Password: Read cookie
-        $password = CI::$APP->input->cookie('fcms_password');
+        // Token: Read the random rotating token (replaces the old password hash)
+        $rawToken = CI::$APP->input->cookie('fcms_token');
 
-        // Password: Emulator Uses SRP6 Encryption | Fix for HTTP_COOKIE Error
-        if($password && column('account', 'verifier') && column('account', 'salt') && CI::$APP->config->item('account_encryption') != 'SPH')
-            $password = urldecode(preg_replace('~.(?:fcms_password=([^;]+))?~', '$1', @$_SERVER['HTTP_COOKIE'])); // Thanks to M3 (Asterixobelix)
+        // Fallback: legacy password hash cookie (for backward compatibility)
+        // TODO: remove after all users have re-logged-in with the new token system.
+        $legacyPassword = CI::$APP->input->cookie('fcms_password');
+        if($legacyPassword && column('account', 'verifier') && column('account', 'salt') && CI::$APP->config->item('account_encryption') != 'SPH')
+            $legacyPassword = urldecode(preg_replace('~.(?:fcms_password=([^;]+))?~', '$1', @$_SERVER['HTTP_COOKIE']));
 
-        // Hooray! Username and Password found!
-        if($username && $password)
+        if($username && $rawToken)
         {
-            // User: Set details
-            $user = CI::$APP->user->setUserDetails($username, $password);
+            // Validate the random token against the DB (rotates on success)
+            $tokenResult = CI::$APP->cms_model->validateRememberMeToken($rawToken);
 
-            // Redirect: Initialize
+            if($tokenResult)
+            {
+                // Token valid — authenticate using the account's stored password
+                $accountRow = CI::$APP->external_account_model->getInfo($tokenResult['account_id']);
+                if($accountRow)
+                {
+                    $user = CI::$APP->user->setUserDetails($accountRow['username'], $accountRow['verifier'] ?? strtoupper($accountRow['sha_pass_hash']));
+
+                    // Set the rotated token cookie
+                    $cookieExpiry = CI::$APP->config->item('cookie_expire');
+                    CI::$APP->input->set_cookie("fcms_token", $tokenResult['new_token'], $cookieExpiry);
+
+                    $redirect = true;
+                    if(in_array(strtolower(str_replace(CI::$APP->config->item('controller_suffix') ?? '', '', CI::$APP->router->fetch_module())), ['api']))
+                        $redirect = false;
+
+                    if($user == 0 && $redirect)
+                        redirect(str_replace(base_url(), '', current_url()) ?? CI::$APP->router->default_controller);
+                }
+            }
+        }
+        // Legacy fallback: old password-hash cookie (backward compatibility)
+        elseif($username && $legacyPassword)
+        {
+            $user = CI::$APP->user->setUserDetails($username, $legacyPassword);
+
             $redirect = true;
-
-            // Redirect: False
             if(in_array(strtolower(str_replace(CI::$APP->config->item('controller_suffix') ?? '', '', CI::$APP->router->fetch_module())), ['api']))
                 $redirect = false;
 
-            if($user == 0 && $redirect)
-                redirect(str_replace(base_url(), '', current_url()) ?? CI::$APP->router->default_controller);
+            if($user == 0)
+            {
+                // Upgrade: issue a new token so next visit uses the secure flow
+                $newToken = CI::$APP->cms_model->issueRememberMeToken(CI::$APP->user->getId());
+                $cookieExpiry = CI::$APP->config->item('cookie_expire');
+                CI::$APP->input->set_cookie("fcms_token", $newToken, $cookieExpiry);
+                // Clear legacy cookie
+                CI::$APP->input->set_cookie("fcms_password", false);
+
+                if($redirect)
+                    redirect(str_replace(base_url(), '', current_url()) ?? CI::$APP->router->default_controller);
+            }
         }
     }
 

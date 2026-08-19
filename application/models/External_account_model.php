@@ -535,10 +535,11 @@ class External_account_model extends CI_Model
     /**
      * Get the username
      *
-     * @param  Int $id
-     * @return String
+     * @param false|Int $id
+     * @param string|array $fields
+     * @return array|false
      */
-    public function getInfo($id = false, $fields = "*")
+    public function getInfo(false|int $id = false, string|array $fields = "*"): false|array
     {
         if (!$id) {
             $id = $this->id;
