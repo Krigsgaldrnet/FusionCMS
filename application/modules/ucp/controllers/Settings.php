@@ -144,11 +144,15 @@ class Settings extends MX_Controller
             die("4");
         }
 
-        $values = array(
-            // Update sanitization according to CMS standards.
+        if (strlen($location) > 32 && !ctype_alpha($location)) {
+            die(lang("location_error", "ucp"));
+        }
+
+        // Update sanitization according to CMS standards.
+        $values = [
             'nickname' => $this->template->format($nickname),
             'location' => $this->template->format($location),
-        );
+        ];
 
         // Change language
         if ($this->config->item('show_language_chooser')) {
@@ -163,21 +167,23 @@ class Settings extends MX_Controller
             }
         }
 
-        // Remove the nickname field if it wasn't changed
-        if ($values['nickname'] == $this->user->getNickname()) {
-            $values = array('location' => $location);
-        } elseif (
-            strlen($values['nickname']) < 4
-            || strlen($values['nickname']) > 14
-            || !preg_match("/[A-Za-z0-9]*/", $values['nickname'])
-        ) {
-            die(lang("nickname_error", "ucp"));
-        } elseif ($this->internal_user_model->nicknameExists($values['nickname'])) {
-            die("2");
-        }
+        $currentNickname = $this->user->getNickname();
 
-        if (strlen($values['location']) > 32 && !ctype_alpha($values['location'])) {
-            die(lang("location_error", "ucp"));
+        // Remove the nickname field if it wasn't changed
+        if ($values['nickname'] == $currentNickname) {
+            unset($values['nickname']);
+        } else {
+            if (strlen($values['nickname']) < 4 || strlen($values['nickname']) > 14) {
+                die(lang("nickname_error", "ucp"));
+            }
+
+            if (!preg_match("/^[A-Za-z0-9]+$/", $values['nickname'])) {
+                die(lang("nickname_error", "ucp"));
+            }
+
+            if ($this->internal_user_model->nicknameExists($values['nickname'])) {
+                die("2");
+            }
         }
 
         $this->settings_model->saveSettings($values);
