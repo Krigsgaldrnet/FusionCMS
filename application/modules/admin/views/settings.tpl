@@ -720,6 +720,7 @@
 						<option value="recaptcha" {if $config.captcha_type == 'recaptcha'}selected{/if}>{lang('google_recaptcha_v2', 'admin')}</option>
 						<option value="recaptcha3" {if $config.captcha_type == 'recaptcha3'}selected{/if}>{lang('google_recaptcha_v3', 'admin')}</option>
 						<option value="image_captcha" {if $config.captcha_type == 'image_captcha'}selected{/if}>{lang('image_captcha', 'admin')}</option>
+						<option value="fusion_captcha" {if $config.captcha_type == 'fusion_captcha'}selected{/if}>{lang('fusion_captcha', 'admin')}</option>
 						<option value="disabled" {if !$config.use_captcha}selected{/if}>{lang('disable', 'admin')}</option>
 					</select>
 				</div>
